@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+	<title>Avalon</title>
+	<meta charset="utf-8">
+	<meta name="description" content="Avalon">
+	<meta name="author" content="Qubit">
+
+	<!-- <script type="text/javascript" src="http://use.typekit.com/rwc5tlm.js"></script>
+	<script type="text/javascript">try{Typekit.load();}catch(e){}</script> -->
+
+	<script src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
+	<!-- <script src="kerning.js"></script> -->
+	<script src="https://cdn.rawgit.com/endtwist/kerning.js/master/kerning.js"></script>
+	<script src="https://tympanus.net/Development/Arctext/js/jquery.arctext.js"></script>
+	<script src="/socket.io/socket.io.js"></script>
+	<link rel="stylesheet" href="./game.css">
+</head>
+
+<body>
+	<div class="content">
+		<div class="left-sidebar">
+			<div class="sb-content">
+				<div class="role-info" onclick="toggleRI()">
+					<div class="ri-title">
+						<p>Spectator</p>
+					</div>
+					<div class="ri-description">
+						<p>For watching the game or waiting for it to start.</p>
+					</div>
+					<div class="ri-other-info">
+					</div>
+				</div>
+				<div class="notepad">
+					<textarea class="np-area"></textarea>
+				</div>
+				<div class="set-username">
+					<input class="su-input" type="text" placeholder="Username">
+					<input class="su-button" type="submit" value="Set" onclick="setUsername()">
+				</div>
+				<div class="voting hidden">
+					<div class="tile wb-tile" onclick="voteTileClick(true)">
+						<p class="title">Approve</p>
+						<div class="whiteball"></div>
+					</div>
+					<div class="tile bb-tile" onclick="voteTileClick(false)">
+						<p class="title">Reject</p>
+						<div class="blackball"></div>
+					</div>
+				</div>
+				<div class="questing hidden">
+					<div class="tile succeed" onclick="questTileClick(true)">
+						<p class="title">Succeed</p>
+						<div class="succ-icon"></div>
+					</div>
+					<div class="tile fail" onclick="questTileClick(false)">
+						<p class="title">Fail</p>
+						<div class="fail-icon"></div>
+					</div>
+				</div>
+				<div class="big-buttons">
+					<input class="ready-button" type="submit" value="Ready" onclick="readyUp()">
+					<input class="next-button hidden" type="submit" value="Next" onclick="kingNext()">
+					<input class="kill-button hidden" type="submit" value="Kill" onclick="kill()">
+					<input class="next-game-button hidden" type="submit" value="Next Game" onclick="nextGame()">
+					<input class="reveal-button hidden" type="submit" value="Reveal" onclick="reveal()">
+					<input class="test-button hidden" type="submit" value="Test" onclick="test()">
+				</div>
+			</div>
+		</div>
+		<div class="main-page">
+			<div class="header">AVALON</div>
+			<div class="state-desc">Generic state description.</div>
+			<div class="pl-wrapper">
+				<div class="playerlist">
+					<div class="pl-anchor">
+					</div>
+					<div class="vote-anchor">
+					</div>
+					<div class="timer-anchor">
+						<div class="timer hidden">5</div>
+					</div>
+					<div class="qr-anchor">
+						<div class="quest-result">
+							<!-- <div class="qr-card back" onclick="clicked(this)"></div>
+							<div class="qr-card back" onclick="clicked(this)"></div>
+							<div class="qr-card back" onclick="clicked(this)"></div> -->
+						</div>
+					</div>
+				</div>
+			</div>
+			<div class="footer">
+				<div class="qt-wrapper">
+					<div class="qt-header">
+						<p>Quest Track</p>
+					</div>
+					<div class="quest-track">
+						<div class="qt-space qt-1">
+							<p class="qt-num">1</p>
+							<div class="qt-questers"></div>
+						</div>
+						<div class="qt-space qt-2">
+							<p class="qt-num">2</p>
+							<div class="qt-questers"></div>
+						</div>
+						<div class="qt-space qt-3">
+							<p class="qt-num">3</p>
+							<div class="qt-questers"></div>
+						</div>
+						<div class="qt-space qt-4">
+							<p class="qt-num">4</p>
+							<div class="qt-questers"></div>
+							<p class="twofail">Two fails req'd</p>
+						</div>
+						<div class="qt-space qt-5">
+							<p class="qt-num">5</p>
+							<div class="qt-questers"></div>
+						</div>
+					</div>
+				</div>
+				<div class="vt-wrapper">
+					<div class="vt-header">
+						<p>Vote Track</p>
+					</div>
+					<div class="vote-track">
+						<div class="vt-space vt-1">1</div>
+						<div class="vt-space vt-2">2</div>
+						<div class="vt-space vt-3">3</div>
+						<div class="vt-space vt-4">4</div>
+						<div class="vt-space vt-5">5</div>
+					</div>
+				</div>
+			</div>
+		</div>
+		<div class="right-sidebar closed">
+			<div class="sb-tab-right" onclick="toggleTab('right')"></div>
+			<div class="sb-content">
+				<div class="chat-entries">
+					<!-- <div class="chat-entry">
+						<p class="chat-name">[Manason]</p>
+						<p class="chat-message">This is a long sample message. It should extend to about three lines long. Jax is a cutie and he's snoring on my legs.</p>
+					</div> -->
+				</div>
+				<div class="chat-input">
+					<input class="chat-input-box" type="text">
+					<input class="chat-input-button" type="submit" value="Send" onclick="sendMessage()">
+				</div>
+			</div>
+		</div>
+	</div>
+</body>
+
+<script>
+	setupTable();
+	var socket = io.connect();
+	$(".twofail").arctext({radius: 60});
+
+	//Recieve
+	socket.on('connect', function(){
+		console.log("connect");
+		socket.emit('room_connection', {"room_id":window.location.pathname.substr(1), "username":getCookie('username')});
+	});
+	socket.on('player_info', function(data){
+		$(".ri-title").html(data.title.replace("Basic","Basic "));
+		$(".ri-description").html(data.description);
+		$(".ri-other-info").html(data.info);
+	});
+	socket.on('state', function(data){
+		$(".state-desc").html(data.description);
+		switch(data.state){
+			case "Lobby":
+				$(".set-username").removeClass("hidden");
+				$(".ready-button").removeClass("hidden");
+				$(".next-game-button").addClass("hidden");
+				$(".reveal-button").addClass("hidden");
+				$(".qt-space").removeClass("cur");
+				$(".qt-space").removeClass("good");
+				$(".qt-space").removeClass("evil");
+				$(".vt-space").removeClass("cur");
+				$(".vt-space").removeClass("vt-color");
+				$(".quest-result").html("");
+				setPlayerlist(data.playerlist);
+				break;
+			case "KingChoose":
+				$(".bb-tile").removeClass("unselected");
+				$(".wb-tile").removeClass("unselected");
+				$(".fail").removeClass("unselected");
+				$(".succeed").removeClass("unselected");
+				$(".ready-button").addClass("hidden");
+				$(".set-username").addClass("hidden");
+				$(".voting").removeClass("hidden");
+				$(".twofail").addClass("hidden");
+				if(data.num_qs[3]>=4)
+					$(".twofail").removeClass("hidden");
+				$(".qt-space").each(function(index){
+					$(this).children(".qt-num").html(data.num_qs[index]);
+					$(this).addClass(data.qt[index].token);
+					$(this).children(".qt-questers").html(data.qt[index].questers);
+				});
+				$(".qt-space").removeClass("cur");
+				$(".qt-"+data.c_qt).addClass("cur");
+				$(".vt-space").removeClass("vt-color");
+				$(".vt-space").each(function(index){
+					if(index < data.c_vt){
+						$(this).addClass("vt-color");
+					}
+				});
+				$(".quest-result").html("");
+				setPlayerlist(data.playerlist);
+				break;
+			case "Voting":
+				$(".vote").removeClass("yes");
+				$(".vote").removeClass("no");
+				$(".vote").removeClass("ready");
+				$(".voting").removeClass("hidden");
+				setVotes(data.votes);
+				break;
+			case "VotingReveal":
+				$(".next-button").addClass("hidden");
+				$(".voting").addClass("hidden");
+				setVotes(data.votes);
+				break;
+			case "Questing":
+				setQuestCards(data.cards);
+				break;
+			case "QuestingReveal":
+				$(".questing").addClass("hidden");
+				setQuestCards(data.cards);
+				$(".qt-space.cur").addClass(data.result.token);
+				$(".qt-space.cur").children(".qt-questers").html(data.result.questers);
+				break;
+			case "Assassin":
+				$(".next-button").addClass("hidden");
+				setPlayerlist2(data.playerlist);
+				break;
+			case "Win":
+				$(".next-button").addClass("hidden");
+				$(".kill-button").addClass("hidden");
+				$(".next-game-button").removeClass("hidden");
+				$(".reveal-button").removeClass("hidden");
+				setPlayerlist2(data.playerlist);
+				break;
+		}
+	});
+	socket.on('show_module', function(data){
+		console.log(data);
+		$("."+data.module).removeClass("hidden");
+		$("."+data.module).prop("disabled", data.is_disabled);
+	});
+	socket.on('chat_message', function(data){
+		var isAtBottom = ($(".chat-entries").scrollTop()+$(".chat-entries").height()+15)>=$(".chat-entries").prop("scrollHeight");
+		var message = '<div class="chat-entry">'+
+						'<p class="chat-name">['+data.username+']</p>'+
+						'<p class="chat-message">'+data.message+'</p>'+
+					  '</div>';
+		$(".chat-entries").append(message);
+		if(isAtBottom)
+			$(".chat-entries").scrollTop($(".chat-entries").prop("scrollHeight"));
+	});
+	socket.on('playerlist', function(data){
+		setPlayerlist(data.list);
+	});
+	socket.on('playerlist2', function(data){
+		setPlayerlist2(data.list);
+	});
+	socket.on('vote_cards', function(data){
+		setVotes(data.votes);
+	});
+	socket.on('quest_card', function(data){
+		$(".quest-result").append('<div class="qr-card back"></div>');
+	});
+	socket.on('select_tile', function(data){
+		switch(data.selected) {
+			case "deselect":
+				$(".wb-tile").removeClass("unselected");
+				$(".bb-tile").removeClass("unselected");
+				break;
+			case "whiteball":
+				$(".wb-tile").removeClass("unselected");
+				$(".bb-tile").addClass("unselected");
+				break;
+			case "blackball":
+				$(".bb-tile").removeClass("unselected");
+				$(".wb-tile").addClass("unselected");
+				break;
+			case "succeed":
+				$(".succeed").removeClass("unselected");
+				$(".fail").addClass("unselected");
+				break;
+			case "fail":
+				$(".fail").removeClass("unselected");
+				$(".succeed").addClass("unselected");
+				break;
+		}
+	});
+	socket.on('timer', function(data){
+		$(".timer-anchor").html("<div class='timer'><p>"+data.timer+"</p></div>");
+		if(data.timer==0)
+			$(".timer").addClass("hidden");
+	});
+
+	//Submit
+	function sendMessage(){
+		socket.emit('chat_message', {"message":$(".chat-input-box").val()});
+		$(".chat-input-box").val("");
+	}
+	function setUsername(){
+		socket.emit('set_username', {"username":$(".su-input").val()});
+		$(".su-input").val("");
+	}
+	function playerClicked(player){
+		socket.emit('player_clicked', {"target_name":$(player).children(".name").text()});
+	}
+	function kingNext(){
+		socket.emit('king_next');
+	}
+	function nextGame(){
+		socket.emit('next_game');
+	}
+	function kill(){
+		socket.emit('assassinate');
+	}
+	function questTileClick(is_succeed){
+		socket.emit('questing', {"quest_tile":is_succeed});
+	}
+	function voteTileClick(is_approve){
+		socket.emit('voting', {"vote_tile":is_approve});
+	}
+	function readyUp(){
+		socket.emit('ready');
+	}
+
+	//Helpers, Etc...
+	function toggleRI(){
+		$(".role-info").toggleClass("redacted");
+	}
+	function reveal(){
+		$(".character").removeClass("hidden");
+	}
+	function toggleTab(tab){
+		if(tab=="right")
+			$(".right-sidebar").toggleClass("closed");
+	}
+	function setQuestCards(cardslist){
+		$(".quest-result").empty();
+		for(var i = 0; i < cardslist.length; i++){
+			var card = '<div class="qr-card flip qr-'+i+' back"></div>';
+			$(".quest-result").append(card);
+		}
+		setTimeout(function(){
+			$(".qr-card").removeClass("back");
+			for(var i = 0; i < cardslist.length; i++){
+				$(".qr-"+i).addClass(cardslist[i]);
+			}
+		}, 350);
+	}
+	function setVotes(voteslist){
+		console.log(voteslist);
+		$(".vote-anchor").empty();
+		for(var i = 0; i < voteslist.length; i++){
+			var vote = '<div class="vote '+voteslist[i]+'"></div>';
+			$(".vote-anchor").append(vote);
+		}
+		setupTable();
+	}
+	function setPlayerlist(playerlist){
+		$(".pl-anchor").empty();
+		$(".vote-anchor").empty();
+		for(var i = 0; i < playerlist.length; i++){
+			var player = '<div class="player '+playerlist[i].tags+'" onclick="playerClicked(this)">'+
+							  '<p class="name">'+playerlist[i].username+'</p>'+
+							  '<div class="crown"></div>'+
+							  '<div class="shield"></div>'+
+							  '<div class="lady"></div>'+
+							  '<div class="target"></div>'+
+						  '</div>';
+			$(".pl-anchor").append(player);
+			var vote = '<div class="vote '+playerlist[i].vote+'"></div>';
+			$(".vote-anchor").append(vote);
+		}
+		setupTable();
+	}
+	function setPlayerlist2(playerlist){
+			$(".pl-anchor").empty();
+			$(".vote-anchor").empty();
+			for(var i = 0; i < playerlist.length; i++){
+				var player = '<div class="player '+playerlist[i].tags+'" onclick="playerClicked(this)">'+
+								  '<p class="name">'+playerlist[i].username+'</p>'+
+								  '<p class="character hidden">'+playerlist[i].character+'</p>'+
+								  '<div class="crown"></div>'+
+								  '<div class="shield"></div>'+
+								  '<div class="lady"></div>'+
+								  '<div class="target"></div>'+
+							  '</div>';
+				$(".pl-anchor").append(player);
+				var vote = '<div class="vote '+playerlist[i].vote+'"></div>';
+				$(".vote-anchor").append(vote);
+			}
+			setupTable();
+	}
+	function setupTable(){
+		var numPlayers = $(".pl-anchor > *").length;
+		var angle = -2*Math.PI/numPlayers;
+		var circle_radius = $(".playerlist").height()/2;
+		var player_radius = -$(".player").height()/2;
+		var vote_radius = -$(".vote").height()/2;
+		var inner_rad = 90;
+		$(".pl-anchor > .player").each(function(index, element) {
+			$(this).css("top",player_radius-circle_radius*Math.cos(angle*index));
+			$(this).css("left",player_radius-circle_radius*Math.sin(angle*index));
+		});
+		$(".vote-anchor > .vote").each(function(index, element) {
+			$(this).css("top",vote_radius-(circle_radius-inner_rad)*Math.cos(angle*index));
+			$(this).css("left",vote_radius-(circle_radius-inner_rad)*Math.sin(angle*index));
+		});
+	}
+
+	//Cookie stuff
+	function setCookie(cname, cvalue) {
+		if(cvalue != null && cvalue != "")
+			document.cookie = cname + "=" + cvalue + ";";
+	}
+	function getCookie(cname) {
+    	var name = cname + "=";
+    	var ca = document.cookie.split(';');
+    	for(var i = 0; i < ca.length; i++) {
+        	var c = ca[i];
+        	while (c.charAt(0) == ' ') {
+            	c = c.substring(1);
+        	}
+        	if (c.indexOf(name) == 0) {
+            	return c.substring(name.length, c.length);
+        	}
+    	}
+    	return "";
+	}
+
+	//Keypress Handling
+	$(".chat-input-box").on('keydown', function(event){
+		if(event.which == 13){
+			sendMessage();
+		}
+	});
+	$(".su-input").on('keydown', function(event){
+		if(event.which == 13){
+			setUsername();
+		}
+	});
+</script>
+</html>

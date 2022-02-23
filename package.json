@@ -1,0 +1,26 @@
+{
+  "name": "avalon",
+  "version": "1.0.0",
+  "description": "web-based recreation of the board game",
+  "main": "Server.js",
+  "dependencies": {
+    "express": "^4.16.3",
+    "express-session": "^1.15.6",
+    "socket.io": "^2.1.1"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "node Server.js",
+    "start": "node server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/JacobValore/avalon.git"
+  },
+  "author": "Qubit",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/JacobValore/avalon/issues"
+  },
+  "homepage": "https://github.com/JacobValore/avalon#readme"
+}

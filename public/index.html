@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<title>Avalon</title>
+	<link rel="stylesheet" href="./style.css">
+	<meta name="description" content="Online Avalon">
+	<meta name="author" content="Qubit">
+	<script src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
+	<script src="/socket.io/socket.io.js"></script>
+</head>
+
+<body>
+	<!-- Header -->
+	<div class="header">
+		<p>AvalonIO</p>
+	</div>
+	<!-- Content Box -->
+	<div class="content-box">
+		<div class="main-box">
+			<div class="username-box">
+				<input class="username-input" placeholder="Username">
+				<button class="button public-game" onclick="startPublicGame()">Play Game!</button>
+			</div>
+			<button class="button show-options" onclick="showOptions()">Custom Game Options</button>
+			<div class="op-outer hidden">
+				<div class="op-middle">
+					<div class="op-inner">
+						<label class="cb-label"><input checked class="cb-private" type="checkbox">Private Game</label>
+						<label class="cb-label"><input class="cb-timer" type="checkbox">Timer</label>
+						<label class="cb-label"><input class="cb-chat" type="checkbox">Chat</label>
+						<button class="button private-game" onclick="startPrivateGame()">Start The Game!</button>
+					</div>
+				</div>
+			</div>
+		</div>
+		<div class="main-box">
+			<button class="rules-button" onclick="showRules()">Rules!</button>
+			<div class="rules hidden">
+				<p class="rules-text">
+				There are two teams. Each team has one leader, who knows what
+				cards are assigned to which team. The starting team has to guess 9
+				cards, the second team has 8. Each game also has 8 neutral
+				cards and one assassin.<br>
+				<br>
+				The leaders take turns giving one word clues about what cards their
+				team should pick. Their clue also comes with the number of cards
+				they think should relate to the clue, and the team gets that many
+				chances to flip a card and reveal its team. The first team to reveal all
+				of their cards, wins.<br>
+				<br>
+				If using skype or discord to chat, the leaders shouldn't speak or give
+				any hints besides the clue and the number.<br>
+				<br>
+				It's important what kind of clues are given.<br>
+				1) It has to be either one word or a proper noun. ("household" or "The
+				Sound Of Music")<br>
+				2) The clue cannot match or contain one of the words on the board.<br>
+				3) The clue cannot relate to the cards <b>solely</b> through spelling, rhyme,
+				or number of letters. (You can't give the clue "three" to tell the players
+				to choose all three letter words. "Fart" can't be used to hint at the
+				word PART. But "please" can be a clue for CHEESE, since it's
+				common to say please when asking someone to pass you food.)<br>
+				5) The number of guesses cannot also be a clue. ("Drink, 3" cannot
+				relate to WINE and TRIANGLE)<br>
+				<br>
+				Extra Stuff:<br>
+				If a card is flipped that doesn't belong to your team, your turn is over.<br>
+				If the assassin card is flipped you instantly lose the game. Leaders:
+				make sure your clue doesn't relate to the black card!<br>
+				Giving someone "zero" guesses means your team gets as many
+				guesses as they like and they're looking for everything that <b>doesn't</b>
+				match the clue.<br>
+				Giving someone "infinite" guesses means they can keep guessing
+				until they win or until they guess a word that isn't for their team.</p>
+			</div>
+		</div>
+	</div>
+
+</body>
+
+<script>
+	var socket = io.connect();
+
+	socket.on('connect', function(){
+		$(".username-input").val(getCookie('username'));
+	});
+	socket.on('redirect', function(destination) {
+    	window.location.href = destination.url;
+	});
+
+	function startPublicGame(){
+		this.setCookie('username', $(".username-input").val());
+		socket.emit('public_game');
+	}
+	function startPrivateGame(){
+		this.setCookie('username', $(".username-input").val());
+		socket.emit('private_game', {"private": $('.cb-private').is(':checked'), "timer": $('.cb-timer').is(':checked'), "chat":$('.cb-chat').is(':checked')});
+	}
+	function showOptions(){
+		$(".op-outer").removeClass("hidden");
+		$(".show-options").addClass("hidden");
+	}
+	function showRules(){
+		$(".rules").toggleClass("hidden");
+	}
+
+	function setCookie(cname, cvalue) {
+		document.cookie = cname + "=" + cvalue + ";";
+	}
+	function getCookie(cname) {
+    	var name = cname + "=";
+    	var ca = document.cookie.split(';');
+    	for(var i = 0; i < ca.length; i++) {
+        	var c = ca[i];
+        	while (c.charAt(0) == ' ') {
+            	c = c.substring(1);
+        	}
+        	if (c.indexOf(name) == 0) {
+            	return c.substring(name.length, c.length);
+        	}
+    	}
+    	return "";
+	}
+</script>
+</html>

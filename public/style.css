@@ -1,0 +1,136 @@
+:root {
+    --background: gray;
+	/* 	red:
+		ff5e5e
+		f73131
+		dd0707
+		b30000
+		8a0000
+		blue:
+		4a75b0
+		2c5ea3
+		114791
+		0a3776
+		05295b
+		manilla:
+		fff8e4
+		fff0c6
+		e6d093
+		bfa55d
+		9d8135
+		assassin:
+		534e40
+		2f2a1d
+		241f10
+		1b1608
+		110d02
+	*/
+	--red: #DD0707;
+	--lightred: #ff5e5e;
+	--darkred: #8a0000;
+	--blue: #114791;
+	--lightblue: #4a75b0;
+	--darkblue: #05295b;
+	--manilla: #E6D093;
+	--lightmanilla: #fff8e4;
+	--darkmanilla: #bfa55d;
+	--assassin: #2f2a1d;
+	--lightassassin: #534e40;
+	--darkassassin: #241f10;
+}
+
+/* Header */
+.header{
+	color: var(--darkmanilla);
+	font: 60px "Trebuchet MS";
+	text-align: center;
+	vertical-align: middle;
+	margin: 30px;
+}
+
+/* ContextBox */
+.content-box{
+	max-width: 600px;
+	margin: auto;
+}
+.main-box{
+	border: 1px solid var(--lightmanilla);
+	padding: 15px;
+	margin-bottom: 10px;
+}
+.username-box{
+	display: flex;
+	flex-direction: row;
+	margin-bottom: 10px;
+}
+.username-input{
+	flex-grow: 1;
+	padding: 7px;
+}
+.public-game{
+	flex-shrink: 0;
+	margin-left: 10px;
+	padding:7px;
+}
+.show-options{
+	width: 100%;
+	padding: 7px;
+}
+.op-middle{
+	margin: auto;
+	max-width: 300px;
+}
+.op-outer{
+	padding-top: 10px;
+	border-top: 2px solid var(--lightmanilla);
+	margin-top: 10px;
+}
+.rules-button{
+	width: 100%;
+	padding: 7px;
+}
+.cb-label{
+	display: block;
+	color: white;
+	font: 13.3333px "Arial";
+}
+.cb-label > *{
+	vertical-align: middle;
+}
+.private-game{
+	margin-top: 5px;
+	width: 100%;
+	padding: 3px;
+}
+.hidden{
+	display: none;
+}
+.rules{
+	margin-top: 10px;
+	border: 1px solid var(--darkassassin);
+	box-sizing: border-box;
+	background-color: var(--lightmanilla);
+	padding: 7px;
+}
+.rules-text{
+	color: var(--darkassassin);
+	font: 14px "Arial";
+	line-height: 1.6;
+}
+
+/* General */
+p{
+    padding:0;
+    margin:0;
+}
+body{
+	width: 100%;
+    padding: 0;
+    margin: 0;
+	background-image: url("bg.jpg");
+    background-color: var(--background);
+}
+html{
+	height: 100%;
+	width: 100%;
+}
